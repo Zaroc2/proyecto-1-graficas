@@ -1,9 +1,5 @@
 #include "figuras.h"
 
-bool Figura::operator<(const Figura &otra) {
-    return this->zIndex < otra.zIndex;
-}
-
 Linea::Linea(InterfazDibujo& i, Punto inicio, Punto final, const Color& colorLinea, Color *colorFondo) : Figura(i){
         puntosControl = new Punto[2];
         puntosControl[0] = inicio;
@@ -14,8 +10,14 @@ Linea::Linea(InterfazDibujo& i, Punto inicio, Punto final, const Color& colorLin
 
 void Linea::dibujar() {
 
-    int dx = abs((puntosControl[1].x - puntosControl[0].x));
-    int dy = abs((puntosControl[1].y - puntosControl[0].y));
+    if (puntosControl[0].x == puntosControl[1].x && puntosControl[0].y == puntosControl[1].y) {
+        interfaz.putPixel((int)puntosControl[0].x, (int)puntosControl[0].y, colorLinea);
+        return;
+    }
+
+    int dx = abs(((int)puntosControl[1].x - (int)puntosControl[0].x));
+    int dy = abs(((int)puntosControl[1].y - (int)puntosControl[0].y));
+
     int sx = puntosControl[0].x < puntosControl[1].x ? 1 : -1;
     int sy = puntosControl[0].y < puntosControl[1].y ? 1 : -1;
     int err = dx - dy;
@@ -285,4 +287,54 @@ void Triangulo::dibujar() {
     dos.dibujar();
     tres.dibujar();
 
+}
+
+Bezier::Bezier(InterfazDibujo& i, vector<Punto> puntos,float dt, const Color& colorLinea, Color* colorFondo) : Figura(i) {
+
+    nNodos = puntos.size();
+    puntosControl = new Punto[nNodos];
+
+    for (int i = 0; i < nNodos; i++) {
+        puntosControl[i] = puntos.at(i);
+    }
+
+    this->dt = dt;
+    this->colorLinea = colorLinea;
+    this->colorFondo = nullptr;
+
+}
+
+void Bezier::dibujar() {
+    Punto anterior = puntosControl[0];
+
+
+    for (float i = dt; i < 1; i += dt) {
+
+        Punto actual = casteljau(i);
+
+        Linea seg(interfaz, anterior, actual, colorLinea, colorFondo);
+        seg.dibujar();
+
+        anterior = actual;
+    }
+
+}
+
+Punto Bezier::casteljau(float t) {
+
+    vector<Punto> aux;
+
+    for (int i = 0; i < nNodos; i++) {
+        aux.push_back(puntosControl[i]);
+    }
+
+
+    for (int r = 1; r < nNodos; r++) {
+        for (int i = 0; i < nNodos - r; i++) {
+            aux.at(i).x = (1 - t) * aux.at(i).x + t * aux.at(i + 1).x;
+            aux.at(i).y = (1 - t) * aux.at(i).y + t * aux.at(i + 1).y;
+        }
+    }
+
+    return aux.at(0);
 }

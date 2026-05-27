@@ -6,6 +6,7 @@ using namespace std;
 struct Punto {
     double x;
     double y;
+    void print() { cout << "(" << x << "," << y << ")" << endl; }
 };
 
 class Figura {
@@ -16,13 +17,11 @@ class Figura {
         Punto* puntosControl;
         Figura(InterfazDibujo& i) : interfaz(i), colorFondo(nullptr), puntosControl(nullptr) {}
     public:
-        int zIndex;
         virtual void dibujar() {};  
         virtual ~Figura() {
             delete[] puntosControl;
             delete colorFondo;
         }
-        bool operator <(const Figura& otra);
 };
 
 class Linea : public Figura {
@@ -57,4 +56,13 @@ class Triangulo : public Figura {
     public:
         Triangulo(InterfazDibujo& i, Punto punto1, Punto punto2, Punto punto3, const Color& colorLinea, Color* colorFondo);
         void dibujar() override;
+};
+
+class Bezier : public Figura {
+    int nNodos;
+    float dt;
+    public: 
+        Bezier(InterfazDibujo& i, vector<Punto> puntos, float dt, const Color& colorLinea, Color* colorFondo);
+        void dibujar() override;
+        Punto casteljau(float t);
 };
