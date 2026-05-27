@@ -6,22 +6,33 @@ enum Estado {Idle,DibujandoLinea,DibujandoRectangulo,DibujandoCirculo,DibujandoE
 
 class proyecto1 : public Engine2D {
 private:
-    Color colorFondo = Color(0.1f, 0.1f, 0.15f);
-    Color colorPincel = Color(1.0f, 0.0f, 0.0f);
-    Color colorFigura = Color(0.0f, 1.0f, 0.0f);
-
-    vector<unique_ptr<Figura>> Figuras;
-    vector<unique_ptr<Figura>> FigurasTemporales;
-
-    int estado;
-    float dt = 0.1;
-    bool rellenarFigura = false;
+    Color colorFondo;
+    Color colorPincel;
+    Color colorFigura;
 
     vector<Punto> puntos;
+    vector<unique_ptr<Figura>> Figuras;
+	unique_ptr<Figura> FiguraTemporal;
+
+    int estado;
+    float dt;
+    bool rellenarFigura;
+
 public:
     proyecto1(): Engine2D(1024, 600, "Proyecto #1 - Gestion y Despliegue de Primitivas"), estado(Idle) {}
     void setup() override {
         clear(colorFondo);
+
+        colorFondo = Color(0.1f, 0.1f, 0.15f);
+        colorPincel = Color(1.0f, 0.0f, 0.0f);
+        colorFigura = Color(0.0f, 1.0f, 0.0f);
+
+        FiguraTemporal = nullptr;
+        estado = Idle;
+        dt = 0.1;
+        rellenarFigura = false;
+
+
         std::cout << "Motor inicializado exitosamente." << std::endl;
     }
     // Eventos
@@ -85,7 +96,7 @@ public:
                 else {
                     rellenarFigura = true;
                 }
-
+                break;
 
         }
     }
@@ -98,11 +109,7 @@ public:
         switch (estado) {
             case DibujandoLinea:
                 if (button == GLFW_MOUSE_BUTTON_LEFT) {
-
-                    Punto aux;
-                    glfwGetCursorPos(glfwGetCurrentContext(), &aux.x, &aux.y);
-                    puntos.push_back(aux);
-
+                    addPunto();
                     if (puntos.size() == 2) {
                         addFigura();
                     }
@@ -110,10 +117,7 @@ public:
                 break;
             case DibujandoRectangulo:
                 if (button == GLFW_MOUSE_BUTTON_LEFT) {
-                    Punto aux;
-                    glfwGetCursorPos(glfwGetCurrentContext(), &aux.x, &aux.y);
-                    puntos.push_back(aux);
-
+                    addPunto();
                     if (puntos.size() == 2) {
                         addFigura();
                     }
@@ -121,10 +125,7 @@ public:
                 break;
             case DibujandoCirculo:
                 if (button == GLFW_MOUSE_BUTTON_LEFT) {
-                    Punto aux;
-                    glfwGetCursorPos(glfwGetCurrentContext(), &aux.x, &aux.y);
-                    puntos.push_back(aux);
-
+					addPunto();
                     if (puntos.size() == 2) {
                         addFigura();
                     }
@@ -132,11 +133,7 @@ public:
                 break;
             case DibujandoElipse:
                 if (button == GLFW_MOUSE_BUTTON_LEFT) {
-                    Punto aux;
-                    glfwGetCursorPos(glfwGetCurrentContext(), &aux.x, &aux.y);
-                    puntos.push_back(aux);
-
-
+                    addPunto();
                     if (puntos.size() == 3) {
                         addFigura();
                     }
@@ -144,11 +141,7 @@ public:
                 break;
             case DibujandoTriangulo:
                 if (button == GLFW_MOUSE_BUTTON_LEFT) {
-                    Punto aux;
-                    glfwGetCursorPos(glfwGetCurrentContext(), &aux.x, &aux.y);
-                    puntos.push_back(aux);
-
-
+                    addPunto();
                     if (puntos.size() == 3) {
                         addFigura();
                     }
@@ -156,14 +149,10 @@ public:
                 break;
             case DibujandoCurva:
                 if (button == GLFW_MOUSE_BUTTON_LEFT) {
-                    Punto aux;
-                    glfwGetCursorPos(glfwGetCurrentContext(), &aux.x, &aux.y);
-                    puntos.push_back(aux);
+                    addPunto();
                 }
                 else if (button == GLFW_MOUSE_BUTTON_RIGHT) {
-                    Punto aux;
-                    glfwGetCursorPos(glfwGetCurrentContext(), &aux.x, &aux.y);
-                    puntos.push_back(aux);
+                    addPunto();
                     addFigura();
                 }
                 break;
@@ -191,7 +180,7 @@ public:
                 if (puntos.size() == 1) {
                     Punto aux;
                     glfwGetCursorPos(glfwGetCurrentContext(), &aux.x, &aux.y);
-                    FigurasTemporales.push_back(make_unique<Linea>(*this, puntos.at(0), aux, colorPincel, &colorFigura));
+					FiguraTemporal = make_unique<Linea>(*this, puntos.at(0), aux, colorPincel, &colorFigura);
 
                 }
                 break;
@@ -201,10 +190,10 @@ public:
                     glfwGetCursorPos(glfwGetCurrentContext(), &aux.x, &aux.y);
                     
                     if (rellenarFigura) {
-                        FigurasTemporales.push_back(make_unique<Rectangulo>(*this, puntos.at(0), aux, colorPincel, &colorFigura));
+						FiguraTemporal = make_unique<Rectangulo>(*this, puntos.at(0), aux, colorPincel, &colorFigura);
                     }
                     else {
-                        FigurasTemporales.push_back(make_unique<Rectangulo>(*this, puntos.at(0), aux, colorPincel,nullptr));
+						FiguraTemporal = make_unique<Rectangulo>(*this, puntos.at(0), aux, colorPincel, nullptr);
                     }
 
                 }
@@ -214,10 +203,10 @@ public:
                     Punto aux;
                     glfwGetCursorPos(glfwGetCurrentContext(), &aux.x, &aux.y);
                     if (rellenarFigura) {
-                        FigurasTemporales.push_back(make_unique<Circulo>(*this, puntos.at(0), aux, colorPincel, &colorFigura));
+						FiguraTemporal = make_unique<Circulo>(*this, puntos.at(0), aux, colorPincel, &colorFigura);
                     }
                     else {
-                        FigurasTemporales.push_back(make_unique<Circulo>(*this, puntos.at(0), aux, colorPincel,nullptr));
+						FiguraTemporal = make_unique<Circulo>(*this, puntos.at(0), aux, colorPincel, nullptr);
                     }
 
                 }
@@ -228,20 +217,20 @@ public:
                     double auxY;
                     glfwGetCursorPos(glfwGetCurrentContext(), nullptr, &auxY);
                     if (rellenarFigura) {
-                        FigurasTemporales.push_back(make_unique<Circulo>(*this, puntos.at(0), Punto(puntos.at(0).x, auxY), colorPincel, &colorFigura));
+						FiguraTemporal = make_unique<Elipse>(*this, puntos.at(0), Punto(puntos.at(0).x, auxY), Punto(puntos.at(0).x, auxY), colorPincel, &colorFigura);
                     }
                     else {
-                        FigurasTemporales.push_back(make_unique<Circulo>(*this, puntos.at(0), Punto(puntos.at(0).x, auxY), colorPincel,nullptr));
+						FiguraTemporal = make_unique<Elipse>(*this, puntos.at(0), Punto(puntos.at(0).x, auxY), Punto(puntos.at(0).x, auxY), colorPincel, nullptr);
                     }
                 }
                 else if (puntos.size() == 2) {
                     double auxX;
                     glfwGetCursorPos(glfwGetCurrentContext(), &auxX, nullptr);
                     if (rellenarFigura) {
-                        FigurasTemporales.push_back(make_unique<Elipse>(*this, puntos.at(0), puntos.at(1), Punto(auxX, puntos.at(0).y), colorPincel, &colorFigura));
+						FiguraTemporal = make_unique<Elipse>(*this, puntos.at(0), puntos.at(1), Punto(auxX, puntos.at(0).y), colorPincel, &colorFigura);
                     }
                     else {
-                        FigurasTemporales.push_back(make_unique<Elipse>(*this, puntos.at(0), puntos.at(1), Punto(auxX, puntos.at(0).y), colorPincel,nullptr));
+						FiguraTemporal = make_unique<Elipse>(*this, puntos.at(0), puntos.at(1), Punto(auxX, puntos.at(0).y), colorPincel, nullptr);
                     }
 
                 }
@@ -251,20 +240,20 @@ public:
                     Punto aux;
                     glfwGetCursorPos(glfwGetCurrentContext(), &aux.x, &aux.y);
                     if (rellenarFigura) {
-                        FigurasTemporales.push_back(make_unique<Linea>(*this, puntos.at(0), aux, colorPincel, &colorFigura));
+						FiguraTemporal = make_unique<Linea>(*this, puntos.at(0), aux, colorPincel, &colorFigura);
                     }
                     else {
-                        FigurasTemporales.push_back(make_unique<Linea>(*this, puntos.at(0), aux, colorPincel,nullptr));
+						FiguraTemporal = make_unique<Linea>(*this, puntos.at(0), aux, colorPincel, nullptr);
                     }
                 }
                 else if (puntos.size() == 2) {
                     Punto aux;
                     glfwGetCursorPos(glfwGetCurrentContext(), &aux.x, &aux.y);
                     if (rellenarFigura) {
-                        FigurasTemporales.push_back(make_unique<Triangulo>(*this, puntos.at(0), puntos.at(1), aux, colorPincel, &colorFigura));
+						FiguraTemporal = make_unique<Triangulo>(*this, puntos.at(0), puntos.at(1), aux,colorPincel, &colorFigura);
                     }
                     else {
-                        FigurasTemporales.push_back(make_unique<Triangulo>(*this, puntos.at(0), puntos.at(1), aux, colorPincel,nullptr));
+						FiguraTemporal = make_unique<Triangulo>(*this, puntos.at(0), puntos.at(1), aux, colorPincel, nullptr);
                     }
                 }
                 break;
@@ -274,21 +263,21 @@ public:
                     Punto auxPoint;
                     glfwGetCursorPos(glfwGetCurrentContext(), &auxPoint.x, &auxPoint.y);
                     auxVector.push_back(auxPoint);
-                    FigurasTemporales.push_back(make_unique<Bezier>(*this, auxVector, dt, colorPincel, &colorFigura));
+					FiguraTemporal = make_unique<Bezier>(*this, auxVector, dt, colorPincel, &colorFigura);
                 }
         }
     }
     void update(float deltaTime) override {
         // Aquí irían cosas que cambian automáticamente con el tiempo
 
-        if (FigurasTemporales.size() >= 1) {
+        if (FiguraTemporal != nullptr) {
             clear(colorFondo);    
             for (int i = 0; i < Figuras.size(); i++) {
                 Figuras.at(i)->dibujar();
             }
 
-            FigurasTemporales.at(0)->dibujar();
-            FigurasTemporales.clear();
+            FiguraTemporal->dibujar();
+            FiguraTemporal = nullptr;
         }
         
     }
@@ -353,23 +342,12 @@ public:
         }
 
         ImGui::Separator();
-        ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
+        ImGui::SliderFloat("Paso Bezier (dt)", &dt, 0.01f, 0.2f);
 
-        ImGui::End();
-
-        /*ImGui::Begin("Herramientas");
-        ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
         ImGui::Separator();
-        float col[3] = { colorPincel.r, colorPincel.g, colorPincel.b };
-        if (ImGui::ColorEdit3("Color Pincel", col)) {
-            colorPincel.r = col[0];
-            colorPincel.g = col[1];
-            colorPincel.b = col[2];
-        }
-        ImGui::Text("Manten click izquierdo para dibujar.");
-        ImGui::Text("Presiona ESPACIO para limpiar.");
+        ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
+
         ImGui::End();
-        */
     }
 
     void addFigura(){
@@ -417,6 +395,12 @@ public:
 
         puntos.clear();
     }
+
+    void addPunto() {
+        Punto aux;
+        glfwGetCursorPos(glfwGetCurrentContext(), &aux.x, &aux.y);
+        puntos.push_back(aux);
+	}
 };
 
 int main() {
