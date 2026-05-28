@@ -21,11 +21,11 @@ private:
 public:
     proyecto1(): Engine2D(1024, 600, "Proyecto #1 - Gestion y Despliegue de Primitivas"), estado(Idle) {}
     void setup() override {
-        clear(colorFondo);
 
         colorFondo = Color(0.1f, 0.1f, 0.15f);
-        colorPincel = Color(1.0f, 0.0f, 0.0f);
-        colorFigura = Color(0.0f, 1.0f, 0.0f);
+        colorPincel = Color(1.0f, 1.0f, 0.0f);
+        colorFigura = Color(0.0f, 0.0f, 0.0f);
+        clear(colorFondo);
 
         FiguraTemporal = nullptr;
         estado = Idle;
@@ -95,6 +95,16 @@ public:
                 }
                 else {
                     rellenarFigura = true;
+                }
+                break;
+            case GLFW_KEY_RIGHT:
+                    if(!(dt > 1.0f)) {
+                        dt += 0.01f;
+					}
+					break;
+            case GLFW_KEY_LEFT:
+                if(!(dt < 0.02f)) {
+                    dt -= 0.01f;
                 }
                 break;
 

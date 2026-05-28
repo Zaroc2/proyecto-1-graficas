@@ -160,9 +160,46 @@ void Circulo::dibujar() {
 
     int y = (int)glm::sqrt(cateto1 * cateto1 + cateto2 * cateto2);
 
-    int d = 1 - y;
-    put8Pixels(Punto(x, y));
 
+    int d = 1 - y;
+
+    // Si no hay relleno, usar el método original simple
+    if (colorFondo == nullptr) {
+        put8Pixels(Punto(x, y));
+        while (y > x) {
+            if (d < 0) {
+                d += 2 * x + 3;
+            }
+            else {
+                d += 2 * (x - y) + 5;
+                y--;
+            }
+            x++;
+            put8Pixels(Punto(x, y));
+        }
+        return;
+    }
+
+    // Si hay relleno: PRIMERA pasada -> pintar sólo relleno (scanlines) y guardar puntos de borde
+    std::vector<Punto> bordes;
+    auto fillFor = [&](const Punto& p) {
+        // span horizontal en y +/- p.y
+        for (int i = puntosControl[0].x - (int)p.x; i <= puntosControl[0].x + (int)p.x; ++i) {
+            interfaz.putPixel(i, puntosControl[0].y + (int)p.y, *colorFondo);
+            interfaz.putPixel(i, puntosControl[0].y - (int)p.y, *colorFondo);
+        }
+        // span horizontal en y +/- p.x (los simétricos)
+        for (int i = puntosControl[0].x - (int)p.y; i <= puntosControl[0].x + (int)p.y; ++i) {
+            interfaz.putPixel(i, puntosControl[0].y + (int)p.x, *colorFondo);
+            interfaz.putPixel(i, puntosControl[0].y - (int)p.x, *colorFondo);
+        }
+        };
+
+    // primera muestra
+    fillFor(Punto{ (double)x, (double)y });
+    bordes.push_back(Punto{ (double)x, (double)y });
+
+    // primera región
     while (y > x) {
         if (d < 0) {
             d += 2 * x + 3;
@@ -172,7 +209,20 @@ void Circulo::dibujar() {
             y--;
         }
         x++;
-        put8Pixels(Punto(x, y));
+        fillFor(Punto{ (double)x, (double)y });
+        bordes.push_back(Punto{ (double)x, (double)y });
+    }
+
+    // SEGUNDA pasada: dibujar sólo el contorno usando los puntos guardados
+    for (const auto& p : bordes) {
+        interfaz.putPixel(puntosControl[0].x + (int)p.x, puntosControl[0].y + (int)p.y, colorLinea);
+        interfaz.putPixel(puntosControl[0].x - (int)p.x, puntosControl[0].y + (int)p.y, colorLinea);
+        interfaz.putPixel(puntosControl[0].x + (int)p.x, puntosControl[0].y - (int)p.y, colorLinea);
+        interfaz.putPixel(puntosControl[0].x - (int)p.x, puntosControl[0].y - (int)p.y, colorLinea);
+        interfaz.putPixel(puntosControl[0].x + (int)p.y, puntosControl[0].y + (int)p.x, colorLinea);
+        interfaz.putPixel(puntosControl[0].x - (int)p.y, puntosControl[0].y + (int)p.x, colorLinea);
+        interfaz.putPixel(puntosControl[0].x + (int)p.y, puntosControl[0].y - (int)p.x, colorLinea);
+        interfaz.putPixel(puntosControl[0].x - (int)p.y, puntosControl[0].y - (int)p.x, colorLinea);
     }
 }
 
@@ -202,7 +252,6 @@ void Elipse::put4Pixels(Punto punto) {
         }
 
     }
-
     interfaz.putPixel(puntosControl[0].x + punto.x, puntosControl[0].y + punto.y, colorLinea);
     interfaz.putPixel(puntosControl[0].x - punto.x, puntosControl[0].y + punto.y, colorLinea);
     interfaz.putPixel(puntosControl[0].x + punto.x, puntosControl[0].y - punto.y, colorLinea);
@@ -210,42 +259,49 @@ void Elipse::put4Pixels(Punto punto) {
 }
 
 void Elipse::dibujar() {
-    int x, y, d;
-    int a = abs(puntosControl[1].x - puntosControl[0].x); 
-    int b = abs(puntosControl[2].y - puntosControl[0].y);
-    //Modalidad 1
-    x = 0;
-    y = b;
+    int xc = puntosControl[0].x;
+    int yc = puntosControl[0].y;
+    int a = abs(puntosControl[1].x - xc);   // semieje X (horizontal)
+    int b = abs(puntosControl[2].y - yc);   // semieje Y (vertical)
 
-    //d = b * (4 * b - 4 * a * a) + a * a;
-    d = b * b - a * a * b + (a * a) / 4;
-    put4Pixels(Punto(x,y));
+    int a2 = a * a;
+    int b2 = b * b;
+    int a2b2 = a2 * b2;
 
-    //while (b * b * 2 * (x + 1) < a * a * (2 * y - 1)) {
-    while (b * b * x < a * a * y) {
+    int x = 0;
+    int y = b;
+
+    // int d = b * (4 * b - 4 * a * a) + a * a;
+    int d = 4 * b2 + a2 * (1 - 4 * b);
+
+    // while (b * b * 2 * (x+1) < a * a * 2 * y - 1){
+    while (2 * b2 * (x + 1) < a2 * (2 * y - 1)) {
+        put4Pixels(Punto(x, y));
         if (d < 0) {
-            d += /* 4 * */ (b * b * (2 * x + 3));
+			d += 4 * b2 * (2 * x + 3);
         }
         else {
-            d += /* 4 * */ (b * b * (2 * x + 3) + a * a * (-2 * y + 2));
+			d += 4 * (b2 * (2 * x + 3) + a2 * (-2 * y + 2));            
             y--;
         }
         x++;
-        put4Pixels(Punto(x,y));
     }
-    //Modalidad 2
-    d = b * b * (x + 0.5) * (x + 0.5) + a * a * (y - 1) * (y - 1) - a * a * b * b;
+    put4Pixels(Punto(x, y));   // ultimo punto de la region 1
+
+    d = b2 * (4 * x * x + 4 * x + 1) + a2 * (4 * y * y - 8 * y + 4) - 4 * a2b2;
+
     while (y > 0) {
+        put4Pixels(Punto(x, y));
         if (d < 0) {
-            d += /* 4 * */ (b * b * (2 * x + 2) + a * a * (-2 * y + 3));
+			d += 4 * (b2 * (2 * x + 2) + a2 * (-2 * y + 3));            
             x++;
         }
         else {
-            d += /* 4 * */ a  * a * (-2 * y + 3);
+            d += 4 * a2 * (-2 * y + 3);
         }
         y--;
-        put4Pixels(Punto(x, y));
     }
+    put4Pixels(Punto(x, 0));   // ultimo punto sobre el eje X
 }
 
 Triangulo::Triangulo(InterfazDibujo& i, Punto punto1, Punto punto2, Punto punto3,const Color& colorLinea, Color* colorFondo) : Figura(i) {
