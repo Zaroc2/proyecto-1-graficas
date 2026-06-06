@@ -117,6 +117,17 @@ public:
         }
 
         switch (estado) {
+            case Idle:
+                if (button == GLFW_MOUSE_BUTTON_LEFT) {
+                    Punto aux;
+                    glfwGetCursorPos(glfwGetCurrentContext(), &aux.x, &aux.y);
+
+                    Punto esqSupIzq(aux.x - 5, aux.y - 5);
+                    Punto esqInfDer(aux.x + 5, aux.y + 5);
+
+                    FiguraTemporal = make_unique<Rectangulo>(*this, esqSupIzq, esqInfDer , colorPincel, &colorFigura);
+                    buscarColisiones(esqSupIzq,esqInfDer);
+                }
             case DibujandoLinea:
                 if (button == GLFW_MOUSE_BUTTON_LEFT) {
                     addPunto();
@@ -282,9 +293,7 @@ public:
 
         if (FiguraTemporal != nullptr) {
             clear(colorFondo);    
-            for (int i = 0; i < Figuras.size(); i++) {
-                Figuras.at(i)->dibujar();
-            }
+            pintarFiguras();
 
             FiguraTemporal->dibujar();
             FiguraTemporal = nullptr;
@@ -294,7 +303,7 @@ public:
     void drawUI() override {
 
         ImGui::SetNextWindowPos(ImVec2(12, 12), ImGuiCond_Always);
-        ImGui::SetNextWindowSize(ImVec2(350, 0), ImGuiCond_Always);
+        ImGui::SetNextWindowSize(ImVec2(405, 0), ImGuiCond_Always);
         ImGui::Begin("##panel", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar);
 
         // Título
@@ -315,16 +324,19 @@ public:
                 ImGui::PopStyleColor(2);
             }
             };
-
+        modoButton("Seleccion", Idle);
+        ImGui::SameLine();
         modoButton("Linea", DibujandoLinea);
         ImGui::SameLine();
         modoButton("Rectangulo", DibujandoRectangulo);
         ImGui::SameLine();
         modoButton("Circulo", DibujandoCirculo);
-        ImGui::SameLine();
         modoButton("Elipse", DibujandoElipse);
         ImGui::SameLine();
         modoButton("Triangulo", DibujandoTriangulo);
+        ImGui::SameLine();
+        modoButton("Bezier", DibujandoCurva);
+        ImGui::NewLine();
 
         // Selectores sin pestañas
         float pencilCol[3] = { colorPincel.r, colorPincel.g, colorPincel.b };
@@ -349,6 +361,7 @@ public:
             colorFondo.g = bgCol[1];
             colorFondo.b = bgCol[2];
             clear(colorFondo);
+			pintarFiguras();
         }
 
         ImGui::Separator();
@@ -411,6 +424,22 @@ public:
         glfwGetCursorPos(glfwGetCurrentContext(), &aux.x, &aux.y);
         puntos.push_back(aux);
 	}
+
+    void pintarFiguras() {
+        for (int i = 0; i < Figuras.size(); i++) {
+            Figuras.at(i)->dibujar();
+        }
+	}
+
+    void buscarColisiones(Punto esqSupIzq, Punto esqInfDer) {
+
+        for (int i = 0; i < Figuras.size(); i++) {
+            if (Figuras.at(i)->colisiona(esqSupIzq, esqInfDer)) {
+                cout << "Colisiona con la figura " << i << endl;
+            }
+        }
+
+    }
 };
 
 int main() {
