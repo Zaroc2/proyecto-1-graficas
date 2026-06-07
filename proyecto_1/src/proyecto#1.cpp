@@ -13,10 +13,11 @@ private:
     vector<Punto> puntos;
     vector<unique_ptr<Figura>> Figuras;
 	unique_ptr<Figura> FiguraTemporal;
+    FiguraSeleccionada* FiguraSel;
 
     int estado;
     float dt;
-    bool rellenarFigura;
+    bool rellenarFigura,seleccionandoFigura;
 
 public:
     proyecto1(): Engine2D(1024, 600, "Proyecto #1 - Gestion y Despliegue de Primitivas"), estado(Idle) {}
@@ -286,6 +287,7 @@ public:
                     auxVector.push_back(auxPoint);
 					FiguraTemporal = make_unique<Bezier>(*this, auxVector, dt, colorPincel, &colorFigura);
                 }
+                break;
         }
     }
     void update(float deltaTime) override {
@@ -433,9 +435,20 @@ public:
 
     void buscarColisiones(Punto esqSupIzq, Punto esqInfDer) {
 
+
+
         for (int i = 0; i < Figuras.size(); i++) {
             if (Figuras.at(i)->colisiona(esqSupIzq, esqInfDer)) {
                 cout << "Colisiona con la figura " << i << endl;
+
+                seleccionandoFigura = true;
+
+                FiguraSel = new FiguraSeleccionada(std::move(Figuras[i]));
+
+                // Eliminar el elemento del vector (ahora Figuras[i] es nullptr)
+                Figuras.erase(Figuras.begin() + i);
+                break;
+
             }
         }
 

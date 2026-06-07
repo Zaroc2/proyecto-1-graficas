@@ -12,6 +12,8 @@ struct Punto {
 int orientacion(Punto P, Punto Q, Punto R);
 int segmentosIntersectan(Punto A, Punto B, Punto C, Punto D);
 
+enum Tipo {tipoLinea, tipoRectangulo, tipoCirculo, tipoElipse, tipoTriangulo, tipoBezier};
+
 class Figura {
     protected:
         InterfazDibujo& interfaz;
@@ -20,13 +22,20 @@ class Figura {
         Punto* puntosControl;
         Figura(InterfazDibujo& i) : interfaz(i), colorFondo(nullptr), puntosControl(nullptr) {}
     public:
+        Tipo tipo;
         virtual void dibujar() {};  
         virtual bool colisiona(Punto esqSupIzq, Punto esqSupDer) { return false; };
         virtual ~Figura() {
             delete[] puntosControl;
             delete colorFondo;
         }
+        virtual int getNumeroPuntosControl() = 0;
+        virtual Punto getControlPoint(int i) = 0;
+        virtual Color getColorLinea() = 0;
+        virtual Color* getColorFondo() = 0;
+        virtual InterfazDibujo& getInterface() = 0;
 };
+
 
 class Linea : public Figura {
     public:
@@ -34,8 +43,11 @@ class Linea : public Figura {
         Linea(InterfazDibujo& i, Punto inicio, Punto final, const Color& colorLinea, Color* colorFondo);
         void dibujar() override;
         bool colisiona(Punto esqSupIzq, Punto esqInfDer) override;
-        //bool segmentosIntersectan(Punto esqSupIzq, Punto esqInfDer);
-        //int orientacion(Punto P, Punto Q, Punto R);
+        int getNumeroPuntosControl() override;
+        Punto getControlPoint(int i) override;
+        Color getColorLinea() override;
+        Color* getColorFondo() override;
+        InterfazDibujo& getInterface() override;
 };
 
 class Rectangulo : public Figura {
@@ -44,6 +56,12 @@ class Rectangulo : public Figura {
         void dibujar() override;
         bool colisiona(Punto esqSupIzq, Punto esqInfDer) override;
         void dibujarColor();
+        int getNumeroPuntosControl() override;
+        Punto getControlPoint(int i) override;
+        Color getColorLinea() override;
+        Color* getColorFondo() override;
+        InterfazDibujo& getInterface() override;
+
 };
 
 class Circulo : public Figura {
@@ -52,6 +70,12 @@ class Circulo : public Figura {
         void dibujar() override;
         bool colisiona(Punto esqSupIzq, Punto esqInfDer) override;
         void put8Pixels(Punto punto);
+        int getNumeroPuntosControl() override;
+        Punto getControlPoint(int i) override;
+        Color getColorLinea() override;
+        Color* getColorFondo() override;
+        InterfazDibujo& getInterface() override;
+
 };
 
 class Elipse : public Figura {
@@ -60,6 +84,12 @@ class Elipse : public Figura {
         void dibujar() override;
         bool colisiona(Punto esqSupIzq, Punto esqInfDer) override;
         void put4Pixels(Punto punto);
+        int getNumeroPuntosControl() override;
+        Punto getControlPoint(int i) override;
+        Color getColorLinea() override;
+        Color* getColorFondo() override;
+        InterfazDibujo& getInterface() override;
+
 };
 
 class Triangulo : public Figura {
@@ -68,6 +98,12 @@ class Triangulo : public Figura {
         void dibujar() override;
         void dibujarRelleno();
         bool colisiona(Punto esqSupIzq, Punto esqInfDer) override;
+        int getNumeroPuntosControl() override;
+        Punto getControlPoint(int i) override;
+        Color getColorLinea() override;
+        Color* getColorFondo() override;
+        InterfazDibujo& getInterface() override;
+
 };
 
 class Bezier : public Figura {
@@ -78,4 +114,21 @@ class Bezier : public Figura {
         void dibujar() override;
         Punto casteljau(float t);
         bool colisiona(Punto esqSupIzq, Punto esqInfDer) override;
+        int getNumeroPuntosControl() override;
+        Punto getControlPoint(int i) override;
+        Color getColorLinea() override;
+        Color* getColorFondo() override;
+        InterfazDibujo& getInterface() override;
+
+};
+
+class FiguraSeleccionada {
+    unique_ptr<Figura> figuraReferencia;
+    vector<unique_ptr<Circulo>> puntosControl;
+
+    public:
+        FiguraSeleccionada(unique_ptr<Figura> f);
+        void dibujar();
+        void colisiona();
+
 };
